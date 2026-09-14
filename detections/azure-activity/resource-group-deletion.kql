@@ -1,0 +1,8 @@
+// Detect deletion of Azure resource groups.
+// Data source: AzureActivity
+// MITRE ATT&CK: T1485 - Data Destruction
+AzureActivity
+| where TimeGenerated > ago(1h)
+| where OperationNameValue =~ "MICROSOFT.RESOURCES/SUBSCRIPTIONS/RESOURCEGROUPS/DELETE"
+| project TimeGenerated, Caller, SubscriptionId, ResourceGroup, ActivityStatusValue, CorrelationId
+| order by TimeGenerated desc
