@@ -1,0 +1,16 @@
+// Detect changes to privileged Microsoft Entra directory roles.
+// Data source: AuditLogs
+// MITRE ATT&CK: T1098 - Account Manipulation
+AuditLogs
+| where TimeGenerated > ago(1h)
+| where Category =~ "RoleManagement"
+| where ActivityDisplayName has_any (
+    "Add member to role",
+    "Add eligible member to role",
+    "Add scoped member to role"
+)
+| extend InitiatedByUser = tostring(InitiatedBy.user.userPrincipalName)
+| mv-expand TargetResources
+| extend TargetUser = tostring(TargetResources.userPrincipalName), TargetDisplayName = tostring(TargetResources.displayName)
+| project TimeGenerated, ActivityDisplayName, InitiatedByUser, TargetUser, TargetDisplayName, Result, CorrelationId
+| order by TimeGenerated desc
