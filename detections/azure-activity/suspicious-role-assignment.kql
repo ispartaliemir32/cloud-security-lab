@@ -1,0 +1,10 @@
+// Detect role assignments created at high-privilege scopes.
+// Data source: AzureActivity
+// MITRE ATT&CK: T1098 - Account Manipulation
+AzureActivity
+| where TimeGenerated > ago(1h)
+| where OperationNameValue =~ "MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE"
+| extend CallerIdentity = tostring(Caller)
+| summarize AssignmentCount=count(), Scopes=make_set(ResourceId, 20) by CallerIdentity, bin(TimeGenerated, 15m)
+| where AssignmentCount >= 1
+| order by TimeGenerated desc
