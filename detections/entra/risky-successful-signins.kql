@@ -1,0 +1,18 @@
+// Surface successful Microsoft Entra ID sign-ins with elevated identity risk.
+// MITRE ATT&CK: T1078 - Valid Accounts
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0
+| where RiskLevelDuringSignIn in~ ("medium", "high") or RiskState in~ ("atRisk", "confirmedCompromised")
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    AppDisplayName,
+    IPAddress,
+    RiskLevelDuringSignIn,
+    RiskState,
+    RiskEventTypes_V2,
+    Country = tostring(LocationDetails.countryOrRegion),
+    City = tostring(LocationDetails.city),
+    DeviceDetail
+| order by TimeGenerated desc
