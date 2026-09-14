@@ -1,0 +1,25 @@
+name: Repeated Failed Microsoft Entra Sign-ins
+description: Detects repeated failed Microsoft Entra sign-in attempts against the same identity in a short time window.
+severity: Medium
+enabled: true
+queryFrequency: PT5M
+queryPeriod: PT15M
+triggerOperator: GreaterThan
+triggerThreshold: 0
+tactics:
+  - CredentialAccess
+techniques:
+  - T1110
+query: |
+  SigninLogs
+  | where TimeGenerated > ago(15m)
+  | where ResultType != 0
+  | summarize FailedAttempts=count(), IPs=make_set(IPAddress, 20) by UserPrincipalName, bin(TimeGenerated, 5m)
+  | where FailedAttempts >= 8
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: UserPrincipalName
+notes: |
+  Portfolio template for detection-as-code. Review Microsoft Sentinel analytic-rule schema and tune thresholds before production deployment.
