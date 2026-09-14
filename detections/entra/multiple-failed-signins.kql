@@ -1,0 +1,19 @@
+// Detect repeated failed Microsoft Entra ID sign-ins against the same identity.
+// MITRE ATT&CK: T1110 - Brute Force
+let threshold = 10;
+let window = 15m;
+SigninLogs
+| where TimeGenerated > ago(window)
+| where ResultType != 0
+| summarize
+    FailedAttempts = count(),
+    SourceIPs = make_set(IPAddress, 20),
+    Apps = make_set(AppDisplayName, 20),
+    Countries = make_set(tostring(LocationDetails.countryOrRegion), 20),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+  by UserPrincipalName
+| where FailedAttempts >= threshold
+| extend Detection = "Multiple failed sign-ins"
+| project LastSeen, UserPrincipalName, FailedAttempts, SourceIPs, Countries, Apps, FirstSeen, Detection
+| order by FailedAttempts desc
